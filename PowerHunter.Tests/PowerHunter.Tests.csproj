@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\PowerHunter\Models\AppCategorySignal.cs" Link="Source\AppCategorySignal.cs" />
+    <Compile Include="..\PowerHunter\Models\AppUsageSourceKind.cs" Link="Source\AppUsageSourceKind.cs" />
+    <Compile Include="..\PowerHunter\Models\AppUsageRecord.cs" Link="Source\AppUsageRecord.cs" />
+    <Compile Include="..\PowerHunter\Models\BatteryRecord.cs" Link="Source\BatteryRecord.cs" />
+    <Compile Include="..\PowerHunter\Models\BatteryAlert.cs" Link="Source\BatteryAlert.cs" />
+    <Compile Include="..\PowerHunter\Models\BackgroundDrainFinding.cs" Link="Source\BackgroundDrainFinding.cs" />
+    <Compile Include="..\PowerHunter\Models\RawAppUsage.cs" Link="Source\RawAppUsage.cs" />
+    <Compile Include="..\PowerHunter\Models\TrendPoint.cs" Link="Source\TrendPoint.cs" />
+    <Compile Include="..\PowerHunter\Models\UserSettings.cs" Link="Source\UserSettings.cs" />
+    <Compile Include="..\PowerHunter\Services\AppCategoryResolver.cs" Link="Source\AppCategoryResolver.cs" />
+    <Compile Include="..\PowerHunter\Services\AppUsageAlertEvaluator.cs" Link="Source\AppUsageAlertEvaluator.cs" />
+    <Compile Include="..\PowerHunter\Services\AlertTriggerPolicy.cs" Link="Source\AlertTriggerPolicy.cs" />
+    <Compile Include="..\PowerHunter\Services\AlertPollingPolicy.cs" Link="Source\AlertPollingPolicy.cs" />
+    <Compile Include="..\PowerHunter\Services\AppUsageSummaryBuilder.cs" Link="Source\AppUsageSummaryBuilder.cs" />
+    <Compile Include="..\PowerHunter\Services\BatteryTrendBuilder.cs" Link="Source\BatteryTrendBuilder.cs" />
+    <Compile Include="..\PowerHunter\Services\BackgroundDrainAnalyzer.cs" Link="Source\BackgroundDrainAnalyzer.cs" />
+    <Compile Include="..\PowerHunter\Services\BatteryRefreshDefaults.cs" Link="Source\BatteryRefreshDefaults.cs" />
+    <Compile Include="..\PowerHunter\Services\BatteryGuardianDeliveryMode.cs" Link="Source\BatteryGuardianDeliveryMode.cs" />
+    <Compile Include="..\PowerHunter\Services\BatteryGuardianDeliveryPolicy.cs" Link="Source\BatteryGuardianDeliveryPolicy.cs" />
+    <Compile Include="..\PowerHunter\Services\NightAutoPowerSavingPolicy.cs" Link="Source\NightAutoPowerSavingPolicy.cs" />
+    <Compile Include="..\PowerHunter\Services\IAlertService.cs" Link="Source\IAlertService.cs" />
+  </ItemGroup>
+
+</Project>
