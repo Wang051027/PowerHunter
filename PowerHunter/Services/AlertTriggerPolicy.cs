@@ -2,7 +2,7 @@ using PowerHunter.Models;
 
 namespace PowerHunter.Services;
 
-/// <summary>
+
 /// Decides whether a saved battery alert should emit a system notification.
 /// </summary>
 public static class AlertTriggerPolicy
