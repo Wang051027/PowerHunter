@@ -3,11 +3,11 @@ using SQLite;
 
 namespace PowerHunter.Data;
 
-/// <summary>
+
 /// SQLite database for all Power Hunter local data.
 /// Handles table creation, CRUD operations, indexing, and historical data archiving.
 /// All data stays on-device — nothing is uploaded to any server.
-/// </summary>
+
 public sealed class PowerHunterDatabase
 {
     private SQLiteAsyncConnection? _database;
