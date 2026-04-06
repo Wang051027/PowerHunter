@@ -5,7 +5,7 @@ namespace PowerHunter.Converters;
 /// <summary>
 /// Converts a boolean to one of two configurable colors.
 /// Supports dark mode via optional DarkTrueColor/DarkFalseColor properties.
-/// </summary>
+
 public sealed class BoolToColorConverter : IValueConverter
 {
     public Color TrueColor { get; set; } = Colors.White;

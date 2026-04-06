@@ -7,7 +7,7 @@ namespace PowerHunter.Converters;
 /// - "bg": returns card-bg/Transparent based on inverted bool (theme-aware)
 /// - "text": returns primary/secondary text color based on inverted bool (theme-aware)
 /// - "rotation": returns 180/0 based on inverted bool (for chevron animation)
-/// </summary>
+
 public sealed class InverseBoolConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
