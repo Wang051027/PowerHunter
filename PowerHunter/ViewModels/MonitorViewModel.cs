@@ -11,19 +11,22 @@ public partial class MonitorViewModel : ObservableObject
     private readonly AppUsageAlertEvaluator _alertEvaluator;
     private readonly PowerEstimationService _powerEstimation;
     private readonly IUsageStatsPermission _usagePermission;
+    private readonly BatteryGuardianService _guardianService;
 
     public MonitorViewModel(
         PowerHunterDatabase database,
         IAlertService alertService,
         AppUsageAlertEvaluator alertEvaluator,
         PowerEstimationService powerEstimation,
-        IUsageStatsPermission usagePermission)
+        IUsageStatsPermission usagePermission,
+        BatteryGuardianService guardianService)
     {
         _database = database;
         _alertService = alertService;
         _alertEvaluator = alertEvaluator;
         _powerEstimation = powerEstimation;
         _usagePermission = usagePermission;
+        _guardianService = guardianService;
     }
 
     // ── Observable Properties ──
@@ -69,7 +72,6 @@ public partial class MonitorViewModel : ObservableObject
         var settings = await _database.GetSettingsAsync();
         GuardianEnabled = settings.GuardianEnabled;
 
-        await RefreshGuardianStateAsync();
         await RefreshAlertsAsync();
         await EvaluateCurrentUsageAsync();
     }
@@ -80,7 +82,7 @@ public partial class MonitorViewModel : ObservableObject
         var settings = await _database.GetSettingsAsync();
         settings.GuardianEnabled = GuardianEnabled;
         await _database.SaveSettingsAsync(settings);
-        await RefreshGuardianStateAsync();
+
         await EvaluateCurrentUsageAsync();
     }
 
@@ -100,7 +102,6 @@ public partial class MonitorViewModel : ObservableObject
                 "Alert name:",
                 placeholder: "High Usage Warning");
 
-            // User cancelled
             if (title == null)
                 return;
 
@@ -116,7 +117,6 @@ public partial class MonitorViewModel : ObservableObject
                 placeholder: "15",
                 keyboard: Keyboard.Numeric);
 
-            // User cancelled
             if (thresholdStr == null)
                 return;
 
@@ -152,6 +152,7 @@ public partial class MonitorViewModel : ObservableObject
             await ShowInfoAsync("Add Alert Failed", "Power Hunter couldn't open the alert form. Please try again.");
         }
     }
+
     [RelayCommand]
     private async Task ToggleAlertAsync(BatteryAlert? alert)
     {
@@ -181,7 +182,8 @@ public partial class MonitorViewModel : ObservableObject
             "Delete",
             "Cancel");
 
-        if (!confirmed) return;
+        if (!confirmed)
+            return;
 
         await _alertService.DeleteAlertAsync(alert.Id);
         await RefreshAlertsAsync();
@@ -205,8 +207,17 @@ public partial class MonitorViewModel : ObservableObject
 
     private async Task EvaluateCurrentUsageAsync()
     {
-        var records = await _database.GetAppUsageAsync(DateTime.UtcNow.Date);
+        var today = DateTime.UtcNow.Date;
+        var records = await _database.GetAppUsageAsync(today);
+
         await _alertEvaluator.EvaluateQuietlyAsync(records);
+
+        if (GuardianEnabled)
+        {
+            await _guardianService.EvaluateAsync(records, today);
+        }
+
+        await RefreshGuardianStateAsync();
     }
 
     private string BuildGuardianStatusText(BackgroundDrainEvent? latestFinding)

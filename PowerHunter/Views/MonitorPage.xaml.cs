@@ -10,16 +10,21 @@ public partial class MonitorPage : ContentPage
         BindingContext = _viewModel = viewModel;
     }
 
-    protected override async void OnAppearing()
+    protected override void OnAppearing()
     {
         base.OnAppearing();
-        try
+
+        Dispatcher.Dispatch(async () =>
         {
-            await _viewModel.LoadDataCommand.ExecuteAsync(null);
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[MonitorPage] LoadData failed: {ex}");
-        }
+            try
+            {
+                await Task.Yield();
+                await _viewModel.LoadDataCommand.ExecuteAsync(null);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MonitorPage] LoadData failed: {ex}");
+            }
+        });
     }
 }

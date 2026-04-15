@@ -25,19 +25,19 @@
                     StrokeShape="RoundRectangle 24"
                     Margin="0,0,0,32">
                 <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
-                    <!-- Shield Icon -->
                     <Border Grid.Column="0"
-                            WidthRequest="48" HeightRequest="48"
+                            WidthRequest="48"
+                            HeightRequest="48"
                             BackgroundColor="{AppThemeBinding Light={StaticResource Blue50}, Dark={StaticResource DarkInfoBg}}"
                             StrokeThickness="0"
                             StrokeShape="RoundRectangle 16"
                             VerticalOptions="Start">
-                        <Label Text="🛡️" FontSize="24"
+                        <Label Text="🛡️"
+                               FontSize="24"
                                HorizontalOptions="Center"
                                VerticalOptions="Center" />
                     </Border>
 
-                    <!-- Text -->
                     <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
                         <Label Text="Battery Guardian"
                                FontSize="18"
@@ -55,7 +55,6 @@
                                LineBreakMode="WordWrap" />
                     </VerticalStackLayout>
 
-                    <!-- Switch -->
                     <Switch x:Name="GuardianSwitch"
                             Grid.Column="2"
                             IsToggled="{Binding GuardianEnabled}"
@@ -72,13 +71,16 @@
                 </Grid>
             </Border>
 
-            <VerticalStackLayout IsVisible="{Binding HasGuardianFindings}" Margin="0,0,0,24" Spacing="12">
+            <VerticalStackLayout IsVisible="{Binding HasGuardianFindings}"
+                                 Margin="0,0,0,24"
+                                 Spacing="12">
                 <Label Text="Recent Guardian Findings"
                        FontSize="18"
                        FontAttributes="Bold"
                        TextColor="{AppThemeBinding Light={StaticResource Slate700}, Dark={StaticResource Gray200}}" />
 
-                <CollectionView ItemsSource="{Binding GuardianFindings}" SelectionMode="None">
+                <CollectionView ItemsSource="{Binding GuardianFindings}"
+                                SelectionMode="None">
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="models:BackgroundDrainEvent">
                             <Border Padding="16"
@@ -120,7 +122,6 @@
                 </CollectionView>
             </VerticalStackLayout>
 
-            <!-- Active Alerts Header -->
             <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,16">
                 <Label Grid.Column="0"
                        Text="{Binding AlertCountText}"
@@ -142,7 +143,6 @@
                         Command="{Binding AddAlertCommand}" />
             </Grid>
 
-            <!-- Alerts List (visible when alerts exist) -->
             <CollectionView ItemsSource="{Binding Alerts}"
                             IsVisible="{Binding HasAlerts}"
                             SelectionMode="None"
@@ -165,36 +165,38 @@
                                            FontSize="12"
                                            TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" />
                                 </VerticalStackLayout>
-                                 <Switch x:Name="AlertSwitch"
-                                         Grid.Column="1"
-                                          IsToggled="{Binding IsEnabled}"
-                                          ThumbColor="White"
-                                          OnColor="{StaticResource Emerald500}"
-                                          VerticalOptions="Center">
-                                      <Switch.Behaviors>
-                                          <toolkit:EventToCommandBehavior
-                                              BindingContext="{Binding Path=BindingContext, Source={x:Reference MonitorPageRoot}}"
-                                              EventName="Toggled"
-                                              Command="{Binding Source={x:Reference MonitorPageRoot}, Path=BindingContext.ToggleAlertCommand}"
-                                              CommandParameter="{Binding Source={x:Reference AlertSwitch}, Path=BindingContext}" />
-                                      </Switch.Behaviors>
-                                  </Switch>
-                                  <Button Grid.Column="2"
-                                          Text="✕"
-                                         FontSize="14"
-                                         TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
-                                         BackgroundColor="Transparent"
-                                         WidthRequest="32" HeightRequest="32"
-                                         Padding="0"
-                                         Command="{Binding Source={x:Reference MonitorPageRoot}, Path=BindingContext.DeleteAlertCommand}"
-                                         CommandParameter="{Binding .}" />
+
+                                <Switch x:Name="AlertSwitch"
+                                        Grid.Column="1"
+                                        IsToggled="{Binding IsEnabled}"
+                                        ThumbColor="White"
+                                        OnColor="{StaticResource Emerald500}"
+                                        VerticalOptions="Center">
+                                    <Switch.Behaviors>
+                                        <toolkit:EventToCommandBehavior
+                                            BindingContext="{Binding Path=BindingContext, Source={x:Reference MonitorPageRoot}}"
+                                            EventName="Toggled"
+                                            Command="{Binding Source={x:Reference MonitorPageRoot}, Path=BindingContext.ToggleAlertCommand}"
+                                            CommandParameter="{Binding Source={x:Reference AlertSwitch}, Path=BindingContext}" />
+                                    </Switch.Behaviors>
+                                </Switch>
+
+                                <Button Grid.Column="2"
+                                        Text="✕"
+                                        FontSize="14"
+                                        TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}"
+                                        BackgroundColor="Transparent"
+                                        WidthRequest="32"
+                                        HeightRequest="32"
+                                        Padding="0"
+                                        Command="{Binding Source={x:Reference MonitorPageRoot}, Path=BindingContext.DeleteAlertCommand}"
+                                        CommandParameter="{Binding .}" />
                             </Grid>
                         </Border>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
 
-            <!-- Empty State Card (visible when no alerts) -->
             <Border Padding="40"
                     BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource DarkCard}}"
                     Stroke="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource DarkBorder}}"
@@ -219,13 +221,11 @@
                 </VerticalStackLayout>
             </Border>
 
-            <!-- Battery Saving Tips Accordion -->
             <Border BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource DarkCard}}"
                     Stroke="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource DarkBorder}}"
                     StrokeThickness="1"
                     StrokeShape="RoundRectangle 24">
                 <VerticalStackLayout>
-                    <!-- Accordion Header -->
                     <Grid Padding="24" ColumnDefinitions="*,Auto">
                         <Grid.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding ToggleTipsCommand}" />
@@ -244,7 +244,6 @@
                                Rotation="{Binding TipsExpanded, Converter={StaticResource InverseBool}, ConverterParameter='rotation'}" />
                     </Grid>
 
-                    <!-- Tips Content -->
                     <VerticalStackLayout Padding="24,0,24,24"
                                          Spacing="12"
                                          IsVisible="{Binding TipsExpanded}">
@@ -252,11 +251,13 @@
                                  Color="{AppThemeBinding Light={StaticResource Gray50}, Dark={StaticResource DarkBorder}}"
                                  Margin="0,0,0,8" />
 
-                        <CollectionView ItemsSource="{Binding BatteryTips}" SelectionMode="None">
-                            <CollectionView.ItemTemplate>
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding BatteryTips}"
+                                             Spacing="0">
+                            <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="x:String">
                                     <HorizontalStackLayout Spacing="8" Padding="0,4">
-                                        <BoxView WidthRequest="6" HeightRequest="6"
+                                        <BoxView WidthRequest="6"
+                                                 HeightRequest="6"
                                                  CornerRadius="3"
                                                  Color="{StaticResource Blue400}"
                                                  VerticalOptions="Start"
@@ -267,8 +268,8 @@
                                                LineBreakMode="WordWrap" />
                                     </HorizontalStackLayout>
                                 </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
                     </VerticalStackLayout>
                 </VerticalStackLayout>
             </Border>
