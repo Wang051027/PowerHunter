@@ -1,5 +1,5 @@
 using CommunityToolkit.Mvvm.Messaging;
-
+using Microsoft.Maui.ApplicationModel;
 namespace PowerHunter.ViewModels;
 
 /// <summary>
@@ -48,8 +48,8 @@ public partial class SettingsViewModel : ObservableObject, IRecipient<Permission
     private bool _isUsageStatsGranted;
 
     public bool IsLightModeEnabled => !DarkModeEnabled;
-    public string Version => "1.0.0";
-    public string Build => "2024.02.11";
+    public string Version => AppInfo.Current.VersionString;
+    public string Build => AppInfo.Current.BuildString;
     public string NightAutoPowerSavingSchedule => "Automatically reduces background sampling from 22:00 to 07:00.";
 
     partial void OnDarkModeEnabledChanged(bool value)
