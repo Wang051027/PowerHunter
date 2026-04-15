@@ -1,6 +1,6 @@
 using System.Globalization;
 using SQLite;
-
+using System.Linq;
 namespace PowerHunter.Data;
 
 
@@ -135,10 +135,25 @@ public sealed class PowerHunterDatabase
     public async Task ReplaceAppUsageForDateAsync(DateTime date, IEnumerable<AppUsageRecord> records)
     {
         var db = await GetConnectionAsync();
-        await db.ExecuteAsync("DELETE FROM AppUsageRecords WHERE Date = ?", date.Date);
-        await db.InsertAllAsync(records);
-    }
 
+        var normalizedDate = date.Date;
+        var normalizedRecords = records.ToList();
+
+        foreach (var record in normalizedRecords)
+        {
+            record.Date = normalizedDate;
+        }
+
+        await db.RunInTransactionAsync(conn =>
+        {
+            conn.Execute("DELETE FROM AppUsageRecords WHERE Date = ?", normalizedDate);
+
+            foreach (var record in normalizedRecords)
+            {
+                conn.Insert(record);
+            }
+        });
+    }
     public async Task<List<AppUsageRecord>> GetAppUsageAsync(DateTime date)
     {
         var db = await GetConnectionAsync();
