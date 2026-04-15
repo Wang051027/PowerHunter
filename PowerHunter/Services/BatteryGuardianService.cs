@@ -66,9 +66,14 @@ public sealed class BatteryGuardianService
 
         if (newFindings.Count > 0)
         {
+            var prioritizedFindings = newFindings
+                .OrderByDescending(f => f.EstimatedDrainPercent)
+                .ThenByDescending(f => f.BackgroundUsageMinutes)
+                .ToList();
+
             await DeliverGuardianAlertAsync(
-                newFindings[0],
-                newFindings.Count - 1,
+                prioritizedFindings[0],
+                prioritizedFindings.Count - 1,
                 settings.NotificationsEnabled);
         }
 
