@@ -100,24 +100,49 @@ public partial class MonitorViewModel : ObservableObject
                 "Alert name:",
                 placeholder: "High Usage Warning");
 
-            if (string.IsNullOrWhiteSpace(title))
+            // User cancelled
+            if (title == null)
                 return;
+
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                await ShowInfoAsync("Missing Alert Name", "Please enter an alert name.");
+                return;
+            }
 
             string? thresholdStr = await PromptAsync(
                 "Threshold",
-                "App battery usage threshold (0-100):",
+                "App battery usage threshold (1-100):",
                 placeholder: "15",
                 keyboard: Keyboard.Numeric);
 
-            if (!double.TryParse(thresholdStr, out double threshold))
+            // User cancelled
+            if (thresholdStr == null)
                 return;
 
-            threshold = Math.Clamp(threshold, 1, 100);
+            if (string.IsNullOrWhiteSpace(thresholdStr))
+            {
+                await ShowInfoAsync("Missing Threshold", "Please enter a number between 1 and 100.");
+                return;
+            }
+
+            if (!double.TryParse(thresholdStr, out double threshold))
+            {
+                await ShowInfoAsync("Invalid Threshold", "Threshold must be a valid number.");
+                return;
+            }
+
+            if (threshold < 1 || threshold > 100)
+            {
+                await ShowInfoAsync("Out of Range", "Threshold must be between 1 and 100.");
+                return;
+            }
 
             await _alertService.CreateAlertAsync(
-                title,
+                title.Trim(),
                 $"Alert when any app exceeds {threshold}% battery usage share.",
                 threshold);
+
             await RefreshAlertsAsync();
             await EvaluateCurrentUsageAsync();
         }
@@ -127,7 +152,6 @@ public partial class MonitorViewModel : ObservableObject
             await ShowInfoAsync("Add Alert Failed", "Power Hunter couldn't open the alert form. Please try again.");
         }
     }
-
     [RelayCommand]
     private async Task ToggleAlertAsync(BatteryAlert? alert)
     {
