@@ -7,6 +7,7 @@ public partial class AppsPage : ContentPage
     private readonly AppsViewModel _viewModel;
     private readonly IDispatcherTimer _refreshTimer;
     private bool _isRefreshing;
+    private DateTime _lastRefreshUtc = DateTime.MinValue;
 
     public AppsPage(AppsViewModel viewModel)
     {
@@ -15,14 +16,26 @@ public partial class AppsPage : ContentPage
 
         _refreshTimer = Dispatcher.CreateTimer();
         _refreshTimer.Interval = BatteryRefreshDefaults.UiRefreshInterval;
-        _refreshTimer.Tick += async (_, _) => await RefreshDataAsync();
+        _refreshTimer.Tick += async (_, _) => await RefreshDataAsync(force: false);
     }
 
-    protected override async void OnAppearing()
+    protected override void OnAppearing()
     {
         base.OnAppearing();
         _refreshTimer.Start();
-        await RefreshDataAsync();
+
+        Dispatcher.Dispatch(async () =>
+        {
+            try
+            {
+                await Task.Yield();
+                await RefreshDataAsync(force: false);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AppsPage] Initial refresh failed: {ex}");
+            }
+        });
     }
 
     protected override void OnDisappearing()
@@ -31,14 +44,20 @@ public partial class AppsPage : ContentPage
         base.OnDisappearing();
     }
 
-    private async Task RefreshDataAsync()
+    private async Task RefreshDataAsync(bool force)
     {
-        if (_isRefreshing) return;
+        if (_isRefreshing)
+            return;
+
+        if (!force && DateTime.UtcNow - _lastRefreshUtc < TimeSpan.FromSeconds(20))
+            return;
 
         _isRefreshing = true;
+
         try
         {
             await _viewModel.LoadDataCommand.ExecuteAsync(null);
+            _lastRefreshUtc = DateTime.UtcNow;
         }
         catch (Exception ex)
         {
