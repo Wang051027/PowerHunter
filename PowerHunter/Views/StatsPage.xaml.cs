@@ -68,43 +68,4 @@ public partial class StatsPage : ContentPage
             _isRefreshing = false;
         }
     }
-
-    private async void OnAppsClicked(object? sender, EventArgs e) => await NavigateAsync("//apps");
-
-    private async void OnStatsClicked(object? sender, EventArgs e)
-    {
-        await RefreshDataAsync(force: true);
-        await NavigateAsync("//stats");
-    }
-
-    private async void OnMonitorClicked(object? sender, EventArgs e) => await NavigateAsync("//monitor");
-
-    private async void OnSettingsClicked(object? sender, EventArgs e) => await NavigateAsync("//settings");
-
-    private async void OnStatsTapped(object? sender, TappedEventArgs e)
-    {
-        await RefreshDataAsync(force: true);
-        await NavigateAsync("//stats");
-    }
-
-    private async void OnAppsTapped(object? sender, TappedEventArgs e) => await NavigateAsync("//apps");
-
-    private async void OnMonitorTapped(object? sender, TappedEventArgs e) => await NavigateAsync("//monitor");
-
-    private async void OnSettingsTapped(object? sender, TappedEventArgs e) => await NavigateAsync("//settings");
-
-    private static async Task NavigateAsync(string route)
-    {
-        if (Shell.Current is null)
-            return;
-
-        try
-        {
-            await Shell.Current.GoToAsync(route);
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[StatsPage] Navigation to {route} failed: {ex}");
-        }
-    }
 }
