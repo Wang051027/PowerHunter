@@ -76,7 +76,7 @@ public partial class StatsPage : ContentPage
 
     private async void OnMonitorTapped(object? sender, TappedEventArgs e)
         => await NavigateAsync("//monitor");
-     
+
     private async void OnSettingsTapped(object? sender, TappedEventArgs e)
         => await NavigateAsync("//settings");
 
