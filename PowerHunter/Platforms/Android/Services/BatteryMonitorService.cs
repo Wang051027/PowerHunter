@@ -2,16 +2,19 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using AndroidX.Core.App;
+using Microsoft.Extensions.DependencyInjection;
+using PowerHunter.Data;
+using PowerHunter.Services;
 using System.Runtime.Versioning;
 
 namespace PowerHunter.Platforms.Android.Services;
 
 /// <summary>
 /// Android foreground service for continuous battery monitoring.
-/// Records battery snapshots every 15 minutes and evaluates alerts.
-/// Runs as a sticky foreground service so Android doesn't kill it.
+/// Runs independently of the UI so guardian findings can still be produced
+/// while the app is in the background.
 /// </summary>
-#pragma warning disable CA1416 // Manifest metadata for Android 14+ foreground-service categorization.
+#pragma warning disable CA1416
 [Service(
     ForegroundServiceType = global::Android.Content.PM.ForegroundService.TypeSpecialUse,
     Exported = false)]
@@ -30,9 +33,15 @@ public sealed class BatteryMonitorService : Service
 
     public override StartCommandResult OnStartCommand(Intent? intent, StartCommandFlags flags, int startId)
     {
-        CreateNotificationChannel();
-        var notification = BuildNotification("Monitoring battery usage...");
+        if (!ShouldRunMonitoring())
+        {
+            StopSelf();
+            return StartCommandResult.NotSticky;
+        }
 
+        CreateNotificationChannel();
+
+        var notification = BuildNotification("Monitoring battery usage...");
         if (OperatingSystem.IsAndroidVersionAtLeast(34))
         {
             StartForegroundSpecialUse(notification);
@@ -43,7 +52,6 @@ public sealed class BatteryMonitorService : Service
         }
 
         StartPeriodicMonitoring();
-
         return StartCommandResult.Sticky;
     }
 
@@ -51,8 +59,10 @@ public sealed class BatteryMonitorService : Service
     {
         _snapshotTimer?.Dispose();
         _snapshotTimer = null;
+
         _alertTimer?.Dispose();
         _alertTimer = null;
+
         base.OnDestroy();
     }
 
@@ -74,6 +84,41 @@ public sealed class BatteryMonitorService : Service
             BatteryRefreshDefaults.AlertCheckInterval);
     }
 
+    private bool ShouldRunMonitoring()
+    {
+        try
+        {
+            var services = IPlatformApplication.Current?.Services;
+            if (services is null)
+                return false;
+
+            var database = services.GetService<PowerHunterDatabase>();
+            var usagePermission = services.GetService<IUsageStatsPermission>();
+
+            if (database is null)
+                return false;
+
+            var settings = database.GetSettingsAsync().GetAwaiter().GetResult();
+            var alerts = database.GetAlertsAsync().GetAwaiter().GetResult();
+
+            var hasEnabledAlerts = alerts.Any(a => a.IsEnabled);
+            var wantsGuardian = settings.GuardianEnabled;
+
+            if (!wantsGuardian && !hasEnabledAlerts)
+                return false;
+
+            if (usagePermission is not null && usagePermission.IsSupported && !usagePermission.IsGranted)
+                return false;
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[BatteryMonitorService] ShouldRunMonitoring failed: {ex}");
+            return false;
+        }
+    }
+
     private async Task RunSnapshotCycleAsync()
     {
         if (Interlocked.Exchange(ref _isSnapshotRunning, 1) == 1)
@@ -81,15 +126,21 @@ public sealed class BatteryMonitorService : Service
 
         try
         {
+            if (!ShouldRunMonitoring())
+            {
+                StopSelf();
+                return;
+            }
+
             var services = IPlatformApplication.Current?.Services;
-            if (services is null) return;
+            if (services is null)
+                return;
 
             var batteryService = services.GetService<IBatteryService>();
-            if (batteryService is null) return;
+            if (batteryService is null)
+                return;
 
             var record = await batteryService.RecordSnapshotAsync();
-
-            // Update notification with current battery level
             UpdateNotification($"Battery: {record.BatteryLevel:F0}% | {record.ChargingState}");
         }
         catch (Exception ex)
@@ -109,23 +160,47 @@ public sealed class BatteryMonitorService : Service
 
         try
         {
+            if (!ShouldRunMonitoring())
+            {
+                StopSelf();
+                return;
+            }
+
             var services = IPlatformApplication.Current?.Services;
-            if (services is null) return;
+            if (services is null)
+                return;
 
             var database = services.GetService<PowerHunterDatabase>();
             var powerEstimation = services.GetService<PowerEstimationService>();
             var alertEvaluator = services.GetService<AppUsageAlertEvaluator>();
+            var guardianService = services.GetService<BatteryGuardianService>();
 
-            if (database is null || powerEstimation is null || alertEvaluator is null)
+            if (database is null || powerEstimation is null || alertEvaluator is null || guardianService is null)
                 return;
 
             var settings = await database.GetSettingsAsync();
             var alerts = await database.GetAlertsAsync();
-            if (!AlertPollingPolicy.ShouldPoll(settings, alerts, powerEstimation.IsCollectionAvailable))
+
+            var shouldEvaluateAlerts =
+                AlertPollingPolicy.ShouldPoll(settings, alerts, powerEstimation.IsCollectionAvailable);
+
+            var shouldEvaluateGuardian =
+                settings.GuardianEnabled && powerEstimation.IsCollectionAvailable;
+
+            if (!shouldEvaluateAlerts && !shouldEvaluateGuardian)
                 return;
 
             var records = await powerEstimation.CollectAndPersistAsync(DateTime.UtcNow.Date);
-            await alertEvaluator.EvaluateQuietlyAsync(records);
+
+            if (shouldEvaluateAlerts)
+            {
+                await alertEvaluator.EvaluateQuietlyAsync(records);
+            }
+
+            if (shouldEvaluateGuardian && records.Count > 0)
+            {
+                await guardianService.EvaluateAsync(records, DateTime.UtcNow.Date);
+            }
         }
         catch (Exception ex)
         {
@@ -159,18 +234,21 @@ public sealed class BatteryMonitorService : Service
         {
             Description = "Continuous battery monitoring service",
         };
-        channel.SetShowBadge(false);
 
+        channel.SetShowBadge(false);
         manager?.CreateNotificationChannel(channel);
     }
 
     private Notification BuildNotification(string text)
     {
-        // Launch the app when notification is tapped
         var intent = new Intent(this, typeof(MainActivity));
         intent.SetFlags(ActivityFlags.SingleTop);
+
         var pendingIntent = PendingIntent.GetActivity(
-            this, 0, intent, GetPendingIntentFlags());
+            this,
+            0,
+            intent,
+            GetPendingIntentFlags());
 
         return new NotificationCompat.Builder(this, ChannelId)
             .SetContentTitle("Power Hunter")

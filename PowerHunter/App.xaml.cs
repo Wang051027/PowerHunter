@@ -7,7 +7,6 @@ public partial class App : Application
     public App(PowerHunterDatabase database)
     {
         _database = database;
-
         InitializeComponent();
         ApplySavedTheme();
     }
@@ -18,19 +17,22 @@ public partial class App : Application
 
         window.Created += async (_, _) =>
         {
-            // Start in-app battery monitoring while the app window is active.
             try
             {
                 await RestoreThemePreferenceFromDatabaseAsync();
 
+#if !ANDROID
+                // On non-Android platforms we still use the in-app monitoring loop.
                 var services = Handler?.MauiContext?.Services;
                 var batteryService = services?.GetService<IBatteryService>();
                 if (batteryService is not null)
                 {
                     await batteryService.StartMonitoringAsync(BatteryRefreshDefaults.InAppSnapshotInterval);
                 }
+#endif
 
-                var dataLifecycle = services?.GetService<DataLifecycleService>();
+                var lifecycleServices = Handler?.MauiContext?.Services;
+                var dataLifecycle = lifecycleServices?.GetService<DataLifecycleService>();
                 if (dataLifecycle is not null)
                 {
                     _ = Task.Run(async () =>
@@ -48,12 +50,13 @@ public partial class App : Application
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[App] StartMonitoring failed: {ex}");
+                System.Diagnostics.Debug.WriteLine($"[App] Startup initialization failed: {ex}");
             }
         };
 
         window.Destroying += (_, _) =>
         {
+#if !ANDROID
             try
             {
                 var batteryService = Handler?.MauiContext?.Services.GetService<IBatteryService>();
@@ -63,6 +66,7 @@ public partial class App : Application
             {
                 // Best-effort cleanup
             }
+#endif
         };
 
         return window;
